@@ -18,6 +18,8 @@ This file tracks the main AI-assisted prompts used while shaping the hackathon f
 - Add night and morning modes with a changed palette so the UI is not locked into a green-heavy look.
 - Add a collapsible left sidebar using a 3-line toggle so the content area can use more width.
 - Enlarge discover topic blocks, rename Rooms to Active Rooms, and make the profile page more feature-rich.
+- Move the sidebar toggle into the left GUI, keep icon-only navigation when minimized, and move profile info to the top of the sidebar.
+- Remove uneven empty vertical space in discover by tightening layout alignment and content flow.
 
 ## Notes
 
