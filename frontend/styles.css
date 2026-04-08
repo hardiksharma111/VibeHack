@@ -262,6 +262,10 @@ p { margin: 0; color: var(--muted); line-height: 1.6; }
   display: none;
 }
 
+.app-shell.sidebar-collapsed .brand-mark {
+  display: none;
+}
+
 .app-shell.sidebar-collapsed .brand-row,
 .app-shell.sidebar-collapsed .nav-stack,
 .app-shell.sidebar-collapsed .mini-profile {
@@ -303,6 +307,25 @@ p { margin: 0; color: var(--muted); line-height: 1.6; }
   width: 40px;
   height: 40px;
   font-size: 1.05rem;
+}
+
+.settings-rail-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.settings-copy {
+  font-weight: 600;
+}
+
+.app-shell.sidebar-collapsed .settings-rail-btn {
+  padding: 0.72rem 0.45rem;
+}
+
+.app-shell.sidebar-collapsed .settings-copy {
+  display: none;
 }
 
 .theme-switcher {

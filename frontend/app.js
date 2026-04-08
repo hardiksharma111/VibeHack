@@ -57,6 +57,19 @@ const messages = [
   { author: 'You', text: 'Testing the low-pressure vibe. No pressure, just ideas.', time: 'now', me: true },
 ];
 
+const anonymousIcons = ['◈', '◉', '⬢', '✦', '✶', '◆', '⬡', '◍'];
+const anonymousNames = ['EchoBloom', 'QuietNova', 'MistyOrbit', 'DriftPulse', 'LunaThread', 'VelvetNode', 'Afterglow', 'SoftSignal'];
+
+function pickRandom(list) {
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+const anonymousUser = {
+  icon: pickRandom(anonymousIcons),
+  name: pickRandom(anonymousNames),
+  status: 'Online · Veteran tier',
+};
+
 const state = {
   view: 'home',
   room: rooms.find((room) => room.selected) ?? rooms[0],
@@ -84,9 +97,14 @@ const els = {
   profileModal: document.getElementById('profileModal'),
   closeProfileBtn: document.getElementById('closeProfileBtn'),
   profileName: document.getElementById('profileName'),
+  profileAvatar: document.getElementById('profileAvatar'),
+  sidebarAvatar: document.getElementById('sidebarAvatar'),
+  sidebarDisplayName: document.getElementById('sidebarDisplayName'),
+  sidebarStatusText: document.getElementById('sidebarStatusText'),
   themeButtons: document.querySelectorAll('.theme-btn'),
   sidebarToggleBtn: document.getElementById('sidebarToggleBtn'),
   appShell: document.querySelector('.app-shell'),
+  settingsRailBtn: document.getElementById('settingsRailBtn'),
 };
 
 function escapeHtml(value) {
@@ -371,7 +389,7 @@ function renderProfile() {
         <div class="kpi-top">
           <div>
             <p class="label">Identity</p>
-            <h3>EchoBloom</h3>
+            <h3>${escapeHtml(anonymousUser.name)}</h3>
           </div>
           <span class="tier-pill">Veteran</span>
         </div>
@@ -445,6 +463,14 @@ function renderProfile() {
   `;
 }
 
+function hydrateAnonymousIdentity() {
+  els.sidebarAvatar.textContent = anonymousUser.icon;
+  els.sidebarDisplayName.textContent = anonymousUser.name;
+  els.sidebarStatusText.textContent = anonymousUser.status;
+  els.profileAvatar.textContent = anonymousUser.icon;
+  els.profileName.textContent = `${anonymousUser.name}${Math.floor(Math.random() * 900) + 100}`;
+}
+
 function render() {
   if (state.view === 'home') {
     renderHome();
@@ -475,6 +501,7 @@ els.searchInput.addEventListener('input', (event) => {
 els.createRoomBtn.addEventListener('click', () => openModal(els.roomModal));
 els.openProfileBtn.addEventListener('click', () => openModal(els.profileModal));
 els.jumpToRoomBtn.addEventListener('click', () => setView('home'));
+els.settingsRailBtn.addEventListener('click', () => setView('profile'));
 els.closeRoomModal.addEventListener('click', () => closeModal(els.roomModal));
 els.closeProfileBtn.addEventListener('click', () => closeModal(els.profileModal));
 
@@ -490,7 +517,7 @@ els.profileModal.addEventListener('click', (event) => {
   }
 });
 
-els.profileName.textContent = 'User436';
+hydrateAnonymousIdentity();
 applyTheme(state.theme);
 applySidebarState();
 render();

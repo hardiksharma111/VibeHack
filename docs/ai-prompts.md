@@ -20,6 +20,8 @@ This file tracks the main AI-assisted prompts used while shaping the hackathon f
 - Enlarge discover topic blocks, rename Rooms to Active Rooms, and make the profile page more feature-rich.
 - Move the sidebar toggle into the left GUI, keep icon-only navigation when minimized, and move profile info to the top of the sidebar.
 - Remove uneven empty vertical space in discover by tightening layout alignment and content flow.
+- Add a dedicated settings button in the left GUI below profile and hide the VibeHack brand mark in minimized mode.
+- Replace fixed profile initials with randomized anonymous icon/name identity on sidebar and profile surfaces.
 
 ## Notes
 
