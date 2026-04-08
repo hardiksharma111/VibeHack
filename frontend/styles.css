@@ -1,20 +1,39 @@
 :root {
+  --radius-xl: 32px;
+  --radius-lg: 24px;
+  --radius-md: 18px;
+}
+
+body[data-theme="night"] {
   color-scheme: dark;
   --bg: #050811;
-  --panel: rgba(11, 18, 32, 0.76);
+  --panel: rgba(11, 18, 32, 0.78);
   --panel-strong: rgba(13, 22, 40, 0.92);
   --panel-soft: rgba(255, 255, 255, 0.05);
   --border: rgba(255, 255, 255, 0.09);
   --text: #eff4ff;
   --muted: #96a5be;
-  --accent: #7cf5d2;
-  --accent-2: #7ea6ff;
-  --accent-3: #ffbc6b;
+  --accent: #7ea6ff;
+  --accent-2: #ffbc6b;
+  --accent-3: #8ef0d7;
   --danger: #ff7b93;
   --shadow: 0 24px 80px rgba(0, 0, 0, 0.4);
-  --radius-xl: 32px;
-  --radius-lg: 24px;
-  --radius-md: 18px;
+}
+
+body[data-theme="morning"] {
+  color-scheme: light;
+  --bg: #f6f1ea;
+  --panel: rgba(255, 255, 255, 0.82);
+  --panel-strong: rgba(255, 255, 255, 0.94);
+  --panel-soft: rgba(12, 18, 32, 0.04);
+  --border: rgba(34, 48, 76, 0.08);
+  --text: #172035;
+  --muted: #5f6d86;
+  --accent: #ff9f6e;
+  --accent-2: #73a7ff;
+  --accent-3: #8ed8c1;
+  --danger: #e35e7d;
+  --shadow: 0 24px 70px rgba(64, 50, 34, 0.14);
 }
 
 * { box-sizing: border-box; }
@@ -23,9 +42,9 @@ body {
   margin: 0;
   min-height: 100vh;
   background:
-    radial-gradient(circle at 10% 0%, rgba(126, 166, 255, 0.18), transparent 28%),
-    radial-gradient(circle at 90% 18%, rgba(124, 245, 210, 0.16), transparent 24%),
-    linear-gradient(160deg, #04070f 0%, #080e1a 46%, #050811 100%);
+    radial-gradient(circle at 10% 0%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 28%),
+    radial-gradient(circle at 90% 18%, color-mix(in srgb, var(--accent-2) 18%, transparent), transparent 24%),
+    linear-gradient(160deg, color-mix(in srgb, var(--bg) 94%, #000 6%) 0%, var(--bg) 46%, color-mix(in srgb, var(--bg) 92%, #000 8%) 100%);
   color: var(--text);
   font-family: Inter, sans-serif;
   overflow-x: hidden;
@@ -61,14 +80,14 @@ input:focus {
   height: 320px;
   right: -120px;
   top: -80px;
-  background: radial-gradient(circle, rgba(124, 245, 210, 0.22), transparent 70%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent-3) 26%, transparent), transparent 70%);
 }
 .ambient-b {
   width: 420px;
   height: 420px;
   left: -170px;
   bottom: -180px;
-  background: radial-gradient(circle, rgba(126, 166, 255, 0.22), transparent 72%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent-2) 22%, transparent), transparent 72%);
 }
 
 .glass {
@@ -153,7 +172,9 @@ p { margin: 0; color: var(--muted); line-height: 1.6; }
 
 .sidebar-search,
 .mini-profile,
-.rail-card {
+.rail-card,
+.active-room-card,
+.theme-switcher {
   border-radius: var(--radius-lg);
   padding: 14px;
 }
@@ -177,9 +198,44 @@ p { margin: 0; color: var(--muted); line-height: 1.6; }
 .nav-link small { margin-top: 4px; color: var(--muted); }
 .nav-link:hover,
 .nav-link.active {
-  background: rgba(124, 245, 210, 0.08);
-  border-color: rgba(124, 245, 210, 0.2);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 22%, transparent);
   transform: translateX(2px);
+}
+
+.theme-switcher {
+  display: grid;
+  gap: 10px;
+}
+.theme-switcher-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.theme-btn {
+  border-radius: 14px;
+  padding: 0.8rem 0.85rem;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid transparent;
+}
+.theme-btn.active {
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.active-room-card {
+  display: grid;
+  gap: 10px;
+}
+.mini-room-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+.ghost-button.small {
+  padding: 0.7rem 0.9rem;
 }
 
 .cta-button,
@@ -287,7 +343,7 @@ p { margin: 0; color: var(--muted); line-height: 1.6; }
 .workspace-chips span,
 .tag-pill,
 .room-badge { background: rgba(255, 255, 255, 0.06); color: var(--text); }
-.tier-pill { background: rgba(124, 245, 210, 0.12); color: var(--accent); }
+.tier-pill { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
 
 .view-root {
   display: grid;
@@ -351,7 +407,7 @@ p { margin: 0; color: var(--muted); line-height: 1.6; }
 }
 .message-row.me {
   margin-left: auto;
-  background: linear-gradient(135deg, rgba(124, 245, 210, 0.15), rgba(126, 166, 255, 0.15));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 18%, transparent), color-mix(in srgb, var(--accent-2) 18%, transparent));
 }
 .message-row strong,
 .feed-card h4,
@@ -378,6 +434,39 @@ p { margin: 0; color: var(--muted); line-height: 1.6; }
   gap: 12px;
 }
 .topic-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.bubble-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(108px, 1fr));
+  gap: 12px;
+}
+.bubble-chip {
+  border-radius: 999px;
+  padding: 0.95rem 1rem;
+  min-height: 100px;
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  text-align: left;
+  color: var(--text);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.14);
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+.bubble-chip span {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+}
+.bubble-chip small {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+.bubble-chip.active {
+  transform: translateY(-2px);
+  background: color-mix(in srgb, var(--accent-2) 16%, transparent);
+  border-color: color-mix(in srgb, var(--accent-2) 28%, transparent);
+}
 .topic-card,
 .room-row,
 .feed-card,
@@ -397,6 +486,7 @@ p { margin: 0; color: var(--muted); line-height: 1.6; }
   gap: 10px;
 }
 .room-row.selected { border-color: rgba(124, 245, 210, 0.4); background: rgba(124, 245, 210, 0.08); }
+.room-row.selected { border-color: color-mix(in srgb, var(--accent) 30%, transparent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
 .room-top,
 .feed-top,
 .kpi-top {
@@ -434,6 +524,7 @@ p { margin: 0; color: var(--muted); line-height: 1.6; }
   background: white;
 }
 .toggle.on { background: rgba(124, 245, 210, 0.35); }
+.toggle.on { background: color-mix(in srgb, var(--accent) 35%, transparent); }
 .toggle.on::after { left: 26px; }
 
 .rail-card {
@@ -496,6 +587,7 @@ p { margin: 0; color: var(--muted); line-height: 1.6; }
   }
   .workspace { min-height: auto; }
   .topic-grid,
+  .bubble-grid,
   .modal-grid,
   .composer,
   .split-grid,

@@ -54,7 +54,25 @@
           </button>
         </nav>
 
+        <section class="theme-switcher glass-subtle">
+          <p class="label">Mode</p>
+          <div class="theme-switcher-row">
+            <button class="theme-btn active" type="button" data-theme="night">Night</button>
+            <button class="theme-btn" type="button" data-theme="morning">Morning</button>
+          </div>
+        </section>
+
         <button class="cta-button" id="createRoomBtn" type="button">+ New room</button>
+
+        <section class="active-room-card glass-subtle">
+          <p class="label">Active room</p>
+          <h3 id="sidebarRoomTitle">Pixel cafe</h3>
+          <p id="sidebarRoomMeta" class="muted">Design · 12/15 online · temporary room</p>
+          <div class="mini-room-actions">
+            <button class="ghost-button small" type="button" id="jumpToRoomBtn">Open</button>
+            <span class="room-badge">Live now</span>
+          </div>
+        </section>
 
         <section class="mini-profile glass-subtle">
           <div class="mini-profile-top">
@@ -142,6 +160,12 @@
           <label>
             <span>Topic</span>
             <input type="text" placeholder="Design" />
+          </label>
+        </div>
+        <div class="modal-grid single">
+          <label>
+            <span>Room vibe</span>
+            <input type="text" placeholder="Calm, playful, focused" />
           </label>
         </div>
         <button class="cta-button full-width" type="button">Create room</button>

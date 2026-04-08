@@ -3,6 +3,9 @@ const topics = [
   { name: 'Study', description: 'Low-pressure accountability rooms for focus sprints.', members: 91, tone: 'Calm mode' },
   { name: 'Late Night', description: 'Spontaneous conversations after the day winds down.', members: 204, tone: 'Pulse' },
   { name: 'Mental Health', description: 'Supportive and anonymous check-ins.', members: 73, tone: 'Safe space' },
+  { name: 'Music', description: 'Share tracks, moodboards, and quick reactions.', members: 64, tone: 'Warm wave' },
+  { name: 'Gaming', description: 'Co-op talk, chill lobbies, and temporary squads.', members: 118, tone: 'Arcade' },
+  { name: 'Building', description: 'Hackathon rooms, quick demos, and shipping energy.', members: 147, tone: 'Launch pad' },
 ];
 
 const rooms = [
@@ -30,6 +33,22 @@ const rooms = [
     description: 'Temporary space for short, spontaneous conversations.',
     selected: false,
   },
+  {
+    title: 'Sunrise notes',
+    category: 'Morning',
+    users: '6/15',
+    status: 'Just now',
+    description: 'A calmer room for early ideas and fresh starts.',
+    selected: false,
+  },
+  {
+    title: 'Neon frame',
+    category: 'Night',
+    users: '9/15',
+    status: '7 min ago',
+    description: 'A late-night room for loose thoughts and quick feedback.',
+    selected: false,
+  },
 ];
 
 const messages = [
@@ -42,6 +61,8 @@ const state = {
   view: 'home',
   room: rooms.find((room) => room.selected) ?? rooms[0],
   search: '',
+  topicFilter: 'all',
+  theme: localStorage.getItem('vibehack-theme') || 'night',
 };
 
 const els = {
@@ -53,12 +74,16 @@ const els = {
   railRoomText: document.getElementById('railRoomText'),
   searchInput: document.getElementById('searchInput'),
   createRoomBtn: document.getElementById('createRoomBtn'),
+  sidebarRoomTitle: document.getElementById('sidebarRoomTitle'),
+  sidebarRoomMeta: document.getElementById('sidebarRoomMeta'),
+  jumpToRoomBtn: document.getElementById('jumpToRoomBtn'),
   openProfileBtn: document.getElementById('openProfileBtn'),
   roomModal: document.getElementById('roomModal'),
   closeRoomModal: document.getElementById('closeRoomModal'),
   profileModal: document.getElementById('profileModal'),
   closeProfileBtn: document.getElementById('closeProfileBtn'),
   profileName: document.getElementById('profileName'),
+  themeButtons: document.querySelectorAll('.theme-btn'),
 };
 
 function escapeHtml(value) {
@@ -97,13 +122,45 @@ function closeModal(modal) {
   modal.classList.add('hidden');
 }
 
+function applyTheme(theme) {
+  state.theme = theme;
+  document.body.dataset.theme = theme;
+  localStorage.setItem('vibehack-theme', theme);
+  els.themeButtons.forEach((button) => {
+    button.classList.toggle('active', button.dataset.theme === theme);
+  });
+}
+
+function matchesSearch(value) {
+  return value.toLowerCase().includes(state.search.trim().toLowerCase());
+}
+
+function getVisibleRooms() {
+  return rooms.filter((room) => {
+    const categoryMatches = state.topicFilter === 'all' || room.category.toLowerCase() === state.topicFilter;
+    const searchMatches = matchesSearch(`${room.title} ${room.category} ${room.description}`);
+    return categoryMatches && searchMatches;
+  });
+}
+
+function setTopicFilter(filter) {
+  state.topicFilter = filter;
+  render();
+}
+
+function syncSidebarRoom() {
+  els.sidebarRoomTitle.textContent = state.room.title;
+  els.sidebarRoomMeta.textContent = `${state.room.category} · ${state.room.users} online · temporary room`;
+}
+
 function renderHome() {
   const selectedRoom = state.room;
   els.pageTitle.textContent = 'Home';
   els.pageSubtitle.textContent = 'Your active chat sits front and center.';
-  els.rightRail.style.display = 'grid';
+  els.rightRail.style.display = '';
   els.railRoomTitle.textContent = selectedRoom.title;
   els.railRoomText.textContent = `${selectedRoom.users} users active · ${selectedRoom.status} · messages expire after 24 hours of inactivity.`;
+  syncSidebarRoom();
 
   els.viewRoot.innerHTML = `
     <section class="view-panel chat-shell">
@@ -158,12 +215,14 @@ function renderDiscover() {
     const haystack = `${topic.name} ${topic.description} ${topic.tone}`.toLowerCase();
     return haystack.includes(state.search.trim().toLowerCase());
   });
+  const filteredRooms = getVisibleRooms();
 
   els.pageTitle.textContent = 'Discover';
-  els.pageSubtitle.textContent = 'Browse topic feeds by interest and context.';
-  els.rightRail.style.display = 'grid';
+  els.pageSubtitle.textContent = 'Tap a bubble to see rooms for that category and create your own space.';
+  els.rightRail.style.display = '';
   els.railRoomTitle.textContent = 'Context feeds';
-  els.railRoomText.textContent = 'Choose a topic and jump into a room built around it.';
+  els.railRoomText.textContent = 'Choose a bubble, browse rooms, or start your own temporary room.';
+  syncSidebarRoom();
 
   els.viewRoot.innerHTML = `
     <section class="view-panel">
@@ -172,18 +231,20 @@ function renderDiscover() {
           <p class="label">Context feeds</p>
           <h3>Topic streams</h3>
         </div>
-        <span class="tier-pill">Search matched: ${filteredTopics.length}</span>
+        <span class="tier-pill">${filteredTopics.length} topics</span>
       </div>
-      <div class="topic-grid">
-        ${filteredTopics
+      <div class="bubble-grid">
+        <button class="bubble-chip ${state.topicFilter === 'all' ? 'active' : ''}" data-topic="all" type="button">
+          <span>All rooms</span>
+          <small>${rooms.length} spaces</small>
+        </button>
+        ${topics
           .map(
             (topic) => `
-              <article class="topic-card">
-                <p class="label">${escapeHtml(topic.tone)}</p>
-                <h4>${escapeHtml(topic.name)}</h4>
-                <p>${escapeHtml(topic.description)}</p>
-                <small>${topic.members} people in this context</small>
-              </article>
+              <button class="bubble-chip ${state.topicFilter === topic.name.toLowerCase() ? 'active' : ''}" data-topic="${escapeHtml(topic.name.toLowerCase())}" type="button">
+                <span>${escapeHtml(topic.name)}</span>
+                <small>${topic.members} rooms/users</small>
+              </button>
             `,
           )
           .join('')}
@@ -192,34 +253,38 @@ function renderDiscover() {
     <section class="view-panel">
       <div class="panel-head compact">
         <div>
-          <p class="label">Featured posts</p>
-          <h3>What people are talking about</h3>
+          <p class="label">Rooms in category</p>
+          <h3>${state.topicFilter === 'all' ? 'All active rooms' : state.topicFilter}</h3>
         </div>
+        <button class="ghost-button" id="createRoomInlineBtn" type="button">Create your room</button>
       </div>
       <div class="feed-grid">
-        <article class="feed-card">
-          <div class="feed-top">
-            <div>
-              <h4>Design critique room</h4>
-              <p>People are sharing soft gradients, layout tests, and mobile-first feedback.</p>
-            </div>
-            <span class="tag-pill">Design</span>
-          </div>
-          <small>12 posts in the last hour · anonymous replies enabled</small>
-        </article>
-        <article class="feed-card">
-          <div class="feed-top">
-            <div>
-              <h4>Study sprint check-in</h4>
-              <p>Short focus check-ins and quiet accountability are keeping the room active.</p>
-            </div>
-            <span class="tag-pill">Study</span>
-          </div>
-          <small>8 posts in the last hour · rooms expire when inactive</small>
-        </article>
+        ${filteredRooms
+          .map(
+            (room) => `
+              <article class="feed-card">
+                <div class="feed-top">
+                  <div>
+                    <h4>${escapeHtml(room.title)}</h4>
+                    <p>${escapeHtml(room.description)}</p>
+                  </div>
+                  <span class="tag-pill">${escapeHtml(room.category)}</span>
+                </div>
+                <small>${escapeHtml(room.users)} online · ${escapeHtml(room.status)} · temporary room</small>
+              </article>
+            `,
+          )
+          .join('')}
       </div>
     </section>
   `;
+
+  document.getElementById('createRoomInlineBtn').addEventListener('click', () => openModal(els.roomModal));
+  document.querySelectorAll('.bubble-chip').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      setTopicFilter(chip.dataset.topic);
+    });
+  });
 }
 
 function renderRooms() {
@@ -230,9 +295,10 @@ function renderRooms() {
 
   els.pageTitle.textContent = 'Rooms';
   els.pageSubtitle.textContent = 'Browse temporary chatrooms and move your active room when needed.';
-  els.rightRail.style.display = 'grid';
+  els.rightRail.style.display = '';
   els.railRoomTitle.textContent = 'Room directory';
   els.railRoomText.textContent = 'Each room supports anonymous chat with a 15 person limit.';
+  syncSidebarRoom();
 
   els.viewRoot.innerHTML = `
     <section class="view-panel">
@@ -280,9 +346,10 @@ function renderRooms() {
 function renderProfile() {
   els.pageTitle.textContent = 'Profile';
   els.pageSubtitle.textContent = 'Anonymous identity, points, and safety settings.';
-  els.rightRail.style.display = 'grid';
+  els.rightRail.style.display = '';
   els.railRoomTitle.textContent = 'Profile';
   els.railRoomText.textContent = 'Other users only see avatar, username, and status.';
+  syncSidebarRoom();
 
   els.viewRoot.innerHTML = `
     <section class="view-panel split-grid">
@@ -344,6 +411,10 @@ document.querySelectorAll('.nav-link').forEach((button) => {
   button.addEventListener('click', () => setView(button.dataset.view));
 });
 
+els.themeButtons.forEach((button) => {
+  button.addEventListener('click', () => applyTheme(button.dataset.theme));
+});
+
 els.searchInput.addEventListener('input', (event) => {
   state.search = event.target.value;
   render();
@@ -351,6 +422,7 @@ els.searchInput.addEventListener('input', (event) => {
 
 els.createRoomBtn.addEventListener('click', () => openModal(els.roomModal));
 els.openProfileBtn.addEventListener('click', () => openModal(els.profileModal));
+els.jumpToRoomBtn.addEventListener('click', () => setView('home'));
 els.closeRoomModal.addEventListener('click', () => closeModal(els.roomModal));
 els.closeProfileBtn.addEventListener('click', () => closeModal(els.profileModal));
 
@@ -367,4 +439,5 @@ els.profileModal.addEventListener('click', (event) => {
 });
 
 els.profileName.textContent = 'User436';
+applyTheme(state.theme);
 render();
