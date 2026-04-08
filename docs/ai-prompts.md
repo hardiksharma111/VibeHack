@@ -28,6 +28,7 @@ This file tracks the main AI-assisted prompts used while shaping the hackathon f
 - Convert Home from chat view to an analytics dashboard showing daily/monthly stats and best-performing days.
 - Connect frontend flow by making Create Room update local room/category state immediately.
 - Add the next UX maturity layer with persistent local state, profile mini charts, room detail drawer interactions, and toast feedback without breaking the privacy-first temporary-chat vision.
+- Execute one full pass of QA polish/docs upgrades and set up deployment so the frontend can be published online right after implementation.
 
 ## Notes
 

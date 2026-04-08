@@ -1,34 +1,48 @@
 # VibeHack
 
-Frontend-first workspace for the Vibe Coding Hackathon project.
+VibeHack is a privacy-first anonymous social UI prototype built for hackathon judging.
 
-## Goal
+## Core Experience
 
-Build a privacy-first social platform for spontaneous, low-pressure communication with:
+- Anonymous identity with randomized avatar + handle
+- Temporary room model with context-based discovery
+- Sidebar-driven navigation (Home, Discover, Active Rooms, Profile, Settings)
+- Day/Night themes, trust-style profile metrics, and lightweight analytics
+- Local persistence for rooms, preferences, selected room, and settings
 
-- anonymous interaction
-- temporary chats
-- topic-based context feeds
-- message posting
-- a simple mobile-friendly UI
+## Project Layout
 
-## Repo Layout
+- `frontend/` - complete user-facing application (HTML/CSS/JS)
+- `backend/` - reserved for backend teammate integration
+- `docs/` - AI prompt log and internal handoff notes
 
-- `frontend/` - all user-facing UI work lives here
-- `backend/` - reserved for teammate-owned server work
-- `docs/` - local notes and handoff material for judges and teammates
+## Run Locally
 
-## Current Focus
+Option 1:
+- Open `frontend/index.html` directly in your browser.
 
-The project is intentionally frontend-only for now. Keep UI, routing, state, and design work inside `frontend/` so the backend can stay isolated for later collaboration.
+Option 2 (static server):
+- From repo root, run a local static server that points to `frontend/`.
 
-## Run It
+## Judge Test (60 Seconds)
 
-Open `frontend/index.html` in a browser to review the current prototype.
+1. Open app and switch between Home, Discover, Active Rooms, Profile, Settings.
+2. Create a new room from Discover or Active Rooms.
+3. Open room Details drawer and set a room active.
+4. Toggle 1 to 2 settings and switch theme.
+5. Refresh page and confirm state persisted.
+6. Optional: use Settings -> Reset to restore clean demo defaults.
 
-## Notes
+## Deployment
 
-The hackathon reference files are intentionally ignored locally so the repo stays clean:
+GitHub Pages auto-deploy is configured via GitHub Actions from `frontend/` on push to `main`.
+
+After enabling Pages in repo settings, expected URL format:
+- `https://hardiksharma111.github.io/VibeHack/`
+
+## Repo Hygiene
+
+The following local reference files are intentionally ignored:
 
 - `Command & Frontend.md`
 - `Rules & Regulation.md`

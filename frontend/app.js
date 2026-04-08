@@ -277,6 +277,25 @@ function showToast(message, type = 'info') {
   }, 2800);
 }
 
+function getEmptyStateMarkup(title, description, actionLabel, actionId) {
+  return `
+    <article class="empty-state glass-subtle">
+      <h4>${escapeHtml(title)}</h4>
+      <p>${escapeHtml(description)}</p>
+      ${actionLabel && actionId ? `<button class="ghost-button" id="${escapeHtml(actionId)}" type="button">${escapeHtml(actionLabel)}</button>` : ''}
+    </article>
+  `;
+}
+
+function resetAppState() {
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem('vibehack-theme');
+  showToast('Saved state reset. Reloading default demo...', 'warning');
+  setTimeout(() => {
+    window.location.reload();
+  }, 450);
+}
+
 function openRoomDrawer(room) {
   const memberNames = Array.from({ length: 5 }, () => pickRandom(anonymousNames));
   els.drawerRoomTitle.textContent = room.title;
@@ -438,20 +457,26 @@ function renderDiscover() {
         <span class="tier-pill">${filteredTopics.length} topics</span>
       </div>
       <div class="bubble-grid">
-        <button class="bubble-chip ${state.topicFilter === 'all' ? 'active' : ''}" data-topic="all" type="button">
-          <span>All rooms</span>
-          <small>${rooms.length} spaces</small>
-        </button>
-        ${topics
-          .map(
-            (topic) => `
-              <button class="bubble-chip ${state.topicFilter === topic.name.toLowerCase() ? 'active' : ''}" data-topic="${escapeHtml(topic.name.toLowerCase())}" type="button">
-                <span>${escapeHtml(topic.name)}</span>
-                <small>${topic.members} rooms/users</small>
+        ${
+          filteredTopics.length
+            ? `
+              <button class="bubble-chip ${state.topicFilter === 'all' ? 'active' : ''}" data-topic="all" type="button">
+                <span>All rooms</span>
+                <small>${rooms.length} spaces</small>
               </button>
-            `,
-          )
-          .join('')}
+              ${filteredTopics
+                .map(
+                  (topic) => `
+                    <button class="bubble-chip ${state.topicFilter === topic.name.toLowerCase() ? 'active' : ''}" data-topic="${escapeHtml(topic.name.toLowerCase())}" type="button">
+                      <span>${escapeHtml(topic.name)}</span>
+                      <small>${topic.members} rooms/users</small>
+                    </button>
+                  `,
+                )
+                .join('')}
+            `
+            : getEmptyStateMarkup('No matching topics', 'Try a broader keyword or create a custom room topic.', 'Create topic room', 'discoverCreateRoomBtn')
+        }
       </div>
     </section>
     <section class="view-panel">
@@ -463,27 +488,40 @@ function renderDiscover() {
         <button class="ghost-button" id="createRoomInlineBtn" type="button">Create your room</button>
       </div>
       <div class="feed-grid">
-        ${filteredRooms
-          .map(
-            (room) => `
-              <article class="feed-card">
-                <div class="feed-top">
-                  <div>
-                    <h4>${escapeHtml(room.title)}</h4>
-                    <p>${escapeHtml(room.description)}</p>
-                  </div>
-                  <span class="tag-pill">${escapeHtml(room.category)}</span>
-                </div>
-                <small>${escapeHtml(room.users)} online · ${escapeHtml(room.status)} · temporary room</small>
-              </article>
-            `,
-          )
-          .join('')}
+        ${
+          filteredRooms.length
+            ? filteredRooms
+                .map(
+                  (room) => `
+                    <article class="feed-card">
+                      <div class="feed-top">
+                        <div>
+                          <h4>${escapeHtml(room.title)}</h4>
+                          <p>${escapeHtml(room.description)}</p>
+                        </div>
+                        <span class="tag-pill">${escapeHtml(room.category)}</span>
+                      </div>
+                      <small>${escapeHtml(room.users)} online · ${escapeHtml(room.status)} · temporary room</small>
+                    </article>
+                  `,
+                )
+                .join('')
+            : getEmptyStateMarkup('No rooms in this view', 'Create a new room to seed this category and keep the conversation moving.', 'Create room', 'discoverCreateRoomBtn')
+        }
       </div>
     </section>
   `;
 
-  document.getElementById('createRoomInlineBtn').addEventListener('click', () => openModal(els.roomModal));
+  const discoverCreateRoomBtn = document.getElementById('discoverCreateRoomBtn');
+  if (discoverCreateRoomBtn) {
+    discoverCreateRoomBtn.addEventListener('click', () => openModal(els.roomModal));
+  }
+
+  const createRoomInlineBtn = document.getElementById('createRoomInlineBtn');
+  if (createRoomInlineBtn) {
+    createRoomInlineBtn.addEventListener('click', () => openModal(els.roomModal));
+  }
+
   document.querySelectorAll('.bubble-chip').forEach((chip) => {
     chip.addEventListener('click', () => {
       setTopicFilter(chip.dataset.topic);
@@ -511,30 +549,39 @@ function renderRooms() {
         <span class="tier-pill">${filteredRooms.length} visible</span>
       </div>
       <div class="room-grid">
-        ${filteredRooms
-          .map(
-            (room) => `
-              <article class="room-row ${room.selected ? 'selected' : ''}" data-room="${escapeHtml(room.title)}">
-                <div class="room-top">
-                  <div>
-                    <p class="label">${escapeHtml(room.category)}</p>
-                    <h4>${escapeHtml(room.title)}</h4>
-                    <p>${escapeHtml(room.description)}</p>
-                  </div>
-                  <span class="room-badge">${escapeHtml(room.users)}</span>
-                </div>
-                <div class="room-actions">
-                  <button class="ghost-button room-switch" type="button" data-room="${escapeHtml(room.title)}">Make active</button>
-                  <button class="ghost-button room-details" type="button" data-room="${escapeHtml(room.title)}">Details</button>
-                  <button class="cta-button room-switch" type="button" data-room="${escapeHtml(room.title)}">Join</button>
-                </div>
-              </article>
-            `,
-          )
-          .join('')}
+        ${
+          filteredRooms.length
+            ? filteredRooms
+                .map(
+                  (room) => `
+                    <article class="room-row ${room.selected ? 'selected' : ''}" data-room="${escapeHtml(room.title)}">
+                      <div class="room-top">
+                        <div>
+                          <p class="label">${escapeHtml(room.category)}</p>
+                          <h4>${escapeHtml(room.title)}</h4>
+                          <p>${escapeHtml(room.description)}</p>
+                        </div>
+                        <span class="room-badge">${escapeHtml(room.users)}</span>
+                      </div>
+                      <div class="room-actions">
+                        <button class="ghost-button room-switch" type="button" data-room="${escapeHtml(room.title)}">Make active</button>
+                        <button class="ghost-button room-details" type="button" data-room="${escapeHtml(room.title)}">Details</button>
+                        <button class="cta-button room-switch" type="button" data-room="${escapeHtml(room.title)}">Join</button>
+                      </div>
+                    </article>
+                  `,
+                )
+                .join('')
+            : getEmptyStateMarkup('No rooms match your filter', 'Reset your search or create a new room to continue.', 'Create room', 'roomsCreateRoomBtn')
+        }
       </div>
     </section>
   `;
+
+  const roomsCreateRoomBtn = document.getElementById('roomsCreateRoomBtn');
+  if (roomsCreateRoomBtn) {
+    roomsCreateRoomBtn.addEventListener('click', () => openModal(els.roomModal));
+  }
 
   document.querySelectorAll('.room-switch').forEach((button) => {
     button.addEventListener('click', (event) => {
@@ -700,6 +747,13 @@ function renderSettings() {
           </div>
           <button class="toggle ${state.settings.moderationAlerts ? 'on' : ''}" data-setting="moderationAlerts" aria-label="Toggle moderation alerts"></button>
         </div>
+        <div class="settings-row">
+          <div>
+            <p class="label">Demo state</p>
+            <strong>Clear local cache and restart with defaults</strong>
+          </div>
+          <button class="ghost-button danger" id="resetStateBtn" type="button">Reset</button>
+        </div>
       </div>
     </section>
   `;
@@ -713,6 +767,13 @@ function renderSettings() {
       renderSettings();
     });
   });
+
+  const resetStateBtn = document.getElementById('resetStateBtn');
+  if (resetStateBtn) {
+    resetStateBtn.addEventListener('click', () => {
+      resetAppState();
+    });
+  }
 }
 
 function hydrateAnonymousIdentity() {
