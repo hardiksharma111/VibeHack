@@ -35,6 +35,31 @@ async def disconnect(sid):
             await sio.emit("system_message", {"msg": f"{username} faded away."}, room=room_name)
 
 
+@sio.event
+async def leave_room(sid):
+    """Triggered when a user leaves a room voluntarily."""
+    session = await sio.get_session(sid)
+    if not session or "room" not in session:
+        return {"status": "noop"}
+
+    room_name = session.get("room")
+    ghost_name = session.get("username")
+    from app.redis_cache.connection import redis_client
+
+    if room_name:
+        await sio.leave_room(sid, room_name)
+        RoomManager.leave_room(room_name)
+
+    if ghost_name:
+        redis_client.delete(f"ghost_pointer:{ghost_name}")
+
+    session.pop("room", None)
+    session.pop("username", None)
+    await sio.save_session(sid, session)
+
+    return {"status": "left", "room_name": room_name, "ghost_name": ghost_name}
+
+
 # --- 2. Room Management ---
 
 @sio.event

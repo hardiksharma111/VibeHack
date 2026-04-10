@@ -24,31 +24,37 @@ Current notes:
 - Points are permanently stored in the database.
 - Ghost identity pointer used for room privacy expires after 24 hours.
 
-## Feature Screenshots
+## Ghost Identity System (Complete Privacy)
+
+When you join a room, your real identity is completely hidden. You receive a temporary ghost identity:
+
+- **On Join**: Server generates a random ghost name like `SilentPanda_234`, `NeonSpectre_567`, etc.
+- **While In Room**: Only your ghost name is visible to other users. Your real username is never exposed.
+- **On Leave**: Ghost identity is immediately deleted from Redis. Your temporary persona vanishes.
+- **Fallback (Offline)**: If backend unavailable, frontend generates equally random ghost names locally.
+
+This ensures complete anonymity within rooms while maintaining user identity tracking for points and trust metrics outside chat.
+
+## Feature Showcase
 
 ### Home Dashboard
+![Home view with activity insights](docs/screenshots/home.png)
 
-![Home dashboard](docs/screenshots/home.png)
-
-### Discover
-
-![Discover view](docs/screenshots/discover.png)
+### Room Discovery
+![Discover tab showing available rooms and topics](docs/screenshots/discover.png)
 
 ### Active Rooms
+![List of active rooms to join](docs/screenshots/rooms.png)
 
-![Active rooms view](docs/screenshots/rooms.png)
+### Temporary Ghost Room
+When you join a room, your profile displays your temporary ghost identity. Other users only see this ghost name in the chat and room members list.
+![Room view with temporary ghost identity](docs/screenshots/ghost-room-temp-joined.png)
 
-### Chat Room
+### User Profile
+![Profile dashboard with trust metrics and activity history](docs/screenshots/profile.png)
 
-![Chat room view](docs/screenshots/chat-room.png)
-
-### Profile
-
-![Profile view](docs/screenshots/profile.png)
-
-### Settings
-
-![Settings view](docs/screenshots/settings.png)
+### Settings & Preferences
+![Settings panel with theme toggles and personal controls](docs/screenshots/settings.png)
 
 ## Project Layout
 
@@ -72,15 +78,6 @@ From `frontend/`:
 2. `npm test`
 
 Current suite covers auth utility validation and session flows.
-
-## Regenerate Screenshots
-
-From `frontend/`:
-
-1. `npm install`
-2. `npx playwright install chromium`
-3. Ensure backend is running on `http://127.0.0.1:8000`
-4. `node scripts/capture-screenshots.mjs`
 
 ## Judge Test (60 Seconds)
 

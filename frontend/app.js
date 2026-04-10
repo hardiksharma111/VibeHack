@@ -68,6 +68,15 @@ function pickRandom(list) {
   return list[Math.floor(Math.random() * list.length)];
 }
 
+function generateGhostName() {
+  const adjectives = ['Silent', 'Neon', 'Cyber', 'Void', 'Crimson', 'Shadow', 'Quantum', 'Prism', 'Stellar', 'Phantom'];
+  const nouns = ['Panda', 'Spectre', 'Ronin', 'Cipher', 'Wraith', 'Nomad', 'Glitch', 'Phoenix', 'Revenant', 'Rogue'];
+  const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+  const noun = nouns[Math.floor(Math.random() * nouns.length)];
+  const num = Math.floor(Math.random() * 900) + 100;
+  return `${adj}${noun}_${num}`;
+}
+
 const anonymousUser = {
   icon: pickRandom(anonymousIcons),
   name: pickRandom(anonymousNames),
@@ -126,6 +135,7 @@ const state = {
   reportContextRoom: null,
   drawerRoomTitle: null,
   typingIndicatorRoom: null,
+  roomGhost: null,
   touchStartX: 0,
   touchStartY: 0,
   searchDebounceTimer: null,
@@ -237,6 +247,25 @@ const els = {
   onboardingNextBtn: document.getElementById('onboardingNextBtn'),
   mobileNavLinks: document.querySelectorAll('.mobile-nav-link'),
 };
+
+function getCurrentPersona() {
+  return state.roomGhost || anonymousUser;
+}
+
+function setRoomGhost(roomTitle, ghostName) {
+  state.roomGhost = {
+    roomTitle,
+    name: ghostName || generateGhostName(),
+    icon: pickRandom(anonymousIcons),
+    status: 'In room · temporary ghost',
+  };
+  hydrateAnonymousIdentity();
+}
+
+function clearRoomGhost() {
+  state.roomGhost = null;
+  hydrateAnonymousIdentity();
+}
 
 function savePersistentState() {
   const payload = {
@@ -710,7 +739,7 @@ function getActivitySeriesForCurrentUser() {
   const joinedRooms = new Set();
   const session = window.AuthUtils.getSession();
   const identitySet = new Set(
-    [anonymousUser.name, session?.username, session?.name]
+    [anonymousUser.name, state.roomGhost?.name, session?.username, session?.name]
       .filter(Boolean)
       .map((value) => String(value).trim().toLowerCase()),
   );
@@ -1229,8 +1258,9 @@ function renderRoomInterface() {
     if (socketClient && state.socketReady) {
       socketClient.emit('send_message', { message: nextMessage });
     } else {
+      const persona = getCurrentPersona();
       messages.push({
-        author: anonymousUser.name,
+        author: persona.name,
         body: nextMessage,
         me: true,
         time: 'now',
@@ -1238,7 +1268,7 @@ function renderRoomInterface() {
       });
       messages.push({
         author: 'System',
-        body: `${anonymousUser.name} sent a new message`,
+        body: `${persona.name} sent a new message`,
         me: false,
         time: 'just now',
         createdAt: new Date().toISOString(),
@@ -1339,14 +1369,22 @@ function renderRooms() {
       const session = window.AuthUtils.getSession();
       const room = rooms.find((entry) => entry.title === roomTitle);
       if (socketClient && state.socketReady) {
-        socketClient.emit('join_room', {
-          room_name: roomTitle,
-          category: room?.category || 'General',
-          permanent_username: session?.username || session?.name || 'guest',
-        });
+        socketClient.emit(
+          'join_room',
+          {
+            room_name: roomTitle,
+            category: room?.category || 'General',
+            permanent_username: session?.username || session?.name || 'guest',
+          },
+          (response) => {
+            setRoomGhost(roomTitle, response?.username || generateGhostName());
+            savePersistentState();
+          },
+        );
       } else {
+        setRoomGhost(roomTitle, generateGhostName());
         const roomLog = getRoomMessages(roomTitle);
-        roomLog.push({ author: 'System', body: `${anonymousUser.name} joined the room`, me: false, time: 'now' });
+        roomLog.push({ author: 'System', body: `${getCurrentPersona().name} joined the room`, me: false, time: 'now' });
         savePersistentState();
       }
       setView('room');
@@ -1614,7 +1652,9 @@ function renderSettings() {
 function hydrateAnonymousIdentity() {
   const session = window.AuthUtils.getSession();
   const { authPoints, joinedRooms, trustScore } = getUserKpis();
-  if (session?.username) {
+  const persona = getCurrentPersona();
+
+  if (!state.roomGhost && session?.username) {
     anonymousUser.name = session.username;
     if (session.authType === 'guest') {
       anonymousUser.status = 'Online · Guest session';
@@ -1623,9 +1663,9 @@ function hydrateAnonymousIdentity() {
     }
   }
 
-  els.sidebarAvatar.textContent = anonymousUser.icon;
-  els.sidebarDisplayName.textContent = anonymousUser.name;
-  els.sidebarStatusText.textContent = anonymousUser.status;
+  els.sidebarAvatar.textContent = persona.icon;
+  els.sidebarDisplayName.textContent = persona.name;
+  els.sidebarStatusText.textContent = persona.status;
   if (els.sidebarPointsValue) {
     els.sidebarPointsValue.textContent = String(authPoints);
   }
@@ -1638,8 +1678,8 @@ function hydrateAnonymousIdentity() {
   if (els.sidebarTrustMeter) {
     els.sidebarTrustMeter.style.width = `${Math.max(8, trustScore)}%`;
   }
-  els.profileAvatar.textContent = anonymousUser.icon;
-  els.profileName.textContent = anonymousUser.name;
+  els.profileAvatar.textContent = persona.icon;
+  els.profileName.textContent = persona.name;
 }
 
 function createRoomFromModal() {
@@ -1853,6 +1893,11 @@ els.leaveRoomBtn.addEventListener('click', () => {
   state.archivedRecaps = state.archivedRecaps.slice(0, 12);
   logModerationAction('Left room', `${room.title} moved to recap archive`);
   showToast(`Left ${room.title}. Recap saved in Home.`, 'info');
+
+  if (socketClient && state.socketReady) {
+    socketClient.emit('leave_room');
+  }
+  clearRoomGhost();
 
   const roomIndex = rooms.findIndex((entry) => entry.title === room.title);
   if (roomIndex >= 0) {
