@@ -133,11 +133,42 @@ const state = {
   viewTransitionTimer: null,
   authMode: 'login',
   backendSyncReady: false,
+  backendProfile: null,
   socketReady: false,
   socketId: null,
+  heartbeatTimer: null,
 };
 
 let socketClient = null;
+
+function stopHeartbeat() {
+  if (!state.heartbeatTimer) {
+    return;
+  }
+  clearInterval(state.heartbeatTimer);
+  state.heartbeatTimer = null;
+}
+
+function startHeartbeat() {
+  stopHeartbeat();
+  const session = window.AuthUtils.getSession();
+  if (!session || session.authType === 'guest') {
+    return;
+  }
+
+  state.heartbeatTimer = setInterval(async () => {
+    if (!socketClient || !state.socketReady) {
+      return;
+    }
+    socketClient.emit('heartbeat');
+    await syncProfileFromBackend();
+    if (state.view === 'home' || state.view === 'profile') {
+      render();
+    } else {
+      hydrateAnonymousIdentity();
+    }
+  }, 30000);
+}
 
 const els = {
   authGate: document.getElementById('authGate'),
@@ -182,6 +213,10 @@ const els = {
   sidebarAvatar: document.getElementById('sidebarAvatar'),
   sidebarDisplayName: document.getElementById('sidebarDisplayName'),
   sidebarStatusText: document.getElementById('sidebarStatusText'),
+  sidebarPointsValue: document.getElementById('sidebarPointsValue'),
+  sidebarRoomsValue: document.getElementById('sidebarRoomsValue'),
+  sidebarTrustValue: document.getElementById('sidebarTrustValue'),
+  sidebarTrustMeter: document.getElementById('sidebarTrustMeter'),
   themeButtons: document.querySelectorAll('.theme-btn'),
   sidebarToggleBtn: document.getElementById('sidebarToggleBtn'),
   appShell: document.querySelector('.app-shell'),
@@ -425,9 +460,11 @@ function logout() {
     socketClient.disconnect();
     socketClient = null;
   }
+  stopHeartbeat();
   state.socketReady = false;
   state.socketId = null;
   state.backendSyncReady = false;
+  state.backendProfile = null;
   window.AuthUtils.logout();
   showToast('Logged out', 'info');
   showAuthGate();
@@ -491,6 +528,10 @@ async function syncProfileFromBackend() {
     }
     const me = await response.json();
     if (me?.username) {
+      state.backendProfile = {
+        username: me.username,
+        authPoints: Math.max(0, Number(me.auth_points || 0)),
+      };
       anonymousUser.name = me.username;
       anonymousUser.status = `Online · ${Math.max(0, Number(me.auth_points || 0))} authenticity points`;
       hydrateAnonymousIdentity();
@@ -513,11 +554,13 @@ function connectSocketIfAvailable() {
   socketClient.on('connect', () => {
     state.socketReady = true;
     state.socketId = socketClient.id;
+    startHeartbeat();
   });
 
   socketClient.on('disconnect', () => {
     state.socketReady = false;
     state.socketId = null;
+    stopHeartbeat();
   });
 
   socketClient.on('receive_message', (payload) => {
@@ -531,6 +574,7 @@ function connectSocketIfAvailable() {
       body: payload.message || '',
       me: false,
       time: 'now',
+      createdAt: new Date().toISOString(),
     });
     savePersistentState();
     if (state.view === 'room') {
@@ -660,20 +704,88 @@ function syncSidebarRoom() {
   els.sidebarRoomMeta.textContent = `${state.room.category} · ${state.room.users} online · temporary room`;
 }
 
-function getPeakDayBy(field) {
-  return weeklyActivity.reduce((peak, day) => (day[field] > peak[field] ? day : peak), weeklyActivity[0]);
-}
+function getActivitySeriesForCurrentUser() {
+  const dayOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const byDay = new Map(dayOrder.map((day) => [day, { day, messages: 0, rooms: 0, whispers: 0 }]));
+  const joinedRooms = new Set();
+  const session = window.AuthUtils.getSession();
+  const identitySet = new Set(
+    [anonymousUser.name, session?.username, session?.name]
+      .filter(Boolean)
+      .map((value) => String(value).trim().toLowerCase()),
+  );
 
-function getMonthlySummary() {
-  return weeklyActivity.reduce(
-    (acc, day) => {
-      acc.messages += day.messages;
-      acc.rooms += day.rooms;
-      acc.whispers += day.whispers;
+  Object.entries(roomMessages).forEach(([roomTitle, messages]) => {
+    if (!Array.isArray(messages)) {
+      return;
+    }
+
+    let postedInRoom = false;
+    messages.forEach((message) => {
+      const author = String(message.author || '').trim().toLowerCase();
+      const mine = Boolean(message.me) || identitySet.has(author);
+      if (!mine) {
+        return;
+      }
+
+      postedInRoom = true;
+      const timestamp = message.createdAt ? new Date(message.createdAt) : new Date();
+      const weekday = timestamp.toLocaleDateString('en-US', { weekday: 'short' });
+      const bucket = byDay.get(weekday) || byDay.get('Mon');
+      bucket.messages += 1;
+      if (Boolean(message.isWhisper) || String(message.body || '').trim().startsWith('/w ')) {
+        bucket.whispers += 1;
+      }
+    });
+
+    if (postedInRoom) {
+      joinedRooms.add(roomTitle);
+    }
+  });
+
+  if (state.room?.title) {
+    joinedRooms.add(state.room.title);
+  }
+
+  const activeRooms = rooms.filter((room) => room.selected).length || 1;
+  const series = dayOrder.map((day) => {
+    const dayEntry = byDay.get(day);
+    return {
+      ...dayEntry,
+      rooms: Math.min(joinedRooms.size || 1, activeRooms + (dayEntry.messages > 0 ? 1 : 0)),
+    };
+  });
+
+  const totals = series.reduce(
+    (acc, entry) => {
+      acc.messages += entry.messages;
+      acc.whispers += entry.whispers;
       return acc;
     },
-    { messages: 0, rooms: 0, whispers: 0 },
+    { messages: 0, whispers: 0 },
   );
+
+  return {
+    series,
+    totals,
+    joinedRooms: joinedRooms.size || 1,
+  };
+}
+
+function getPeakDayBy(series, field) {
+  return series.reduce((peak, day) => (day[field] > peak[field] ? day : peak), series[0]);
+}
+
+function getUserKpis() {
+  const activity = getActivitySeriesForCurrentUser();
+  const authPoints = Math.max(0, Number(state.backendProfile?.authPoints || 0));
+  const trustScore = Math.min(100, 60 + Math.floor(authPoints / 5));
+  return {
+    authPoints,
+    trustScore,
+    joinedRooms: activity.joinedRooms,
+    activity,
+  };
 }
 
 function getRoomCountdownText(room) {
@@ -788,11 +900,17 @@ function getRoomMessages(roomTitle) {
 
 function renderHome() {
   const selectedRoom = state.room;
-  const monthly = getMonthlySummary();
-  const peakMessages = getPeakDayBy('messages');
-  const peakRooms = getPeakDayBy('rooms');
-  const peakWhispers = getPeakDayBy('whispers');
-  const maxMessages = Math.max(...weeklyActivity.map((d) => d.messages));
+  const { activity } = getUserKpis();
+  const dailyMessages = activity.series[activity.series.length - 1].messages;
+  const monthly = {
+    messages: activity.totals.messages,
+    rooms: activity.joinedRooms,
+    whispers: activity.totals.whispers,
+  };
+  const peakMessages = getPeakDayBy(activity.series, 'messages');
+  const peakRooms = getPeakDayBy(activity.series, 'rooms');
+  const peakWhispers = getPeakDayBy(activity.series, 'whispers');
+  const maxMessages = Math.max(1, ...activity.series.map((d) => d.messages));
 
   els.pageTitle.textContent = 'Home';
   els.pageSubtitle.textContent = 'Track activity, momentum, and communication patterns across your temporary rooms.';
@@ -810,7 +928,7 @@ function renderHome() {
       <div class="stats-grid">
         <article class="stat-card">
           <p class="label">Daily messages</p>
-          <strong>${weeklyActivity[weeklyActivity.length - 1].messages}</strong>
+          <strong>${dailyMessages}</strong>
           <small class="bar-label">Today</small>
         </article>
         <article class="stat-card">
@@ -865,7 +983,7 @@ function renderHome() {
         </div>
       </div>
       <div class="weekly-chart">
-        ${weeklyActivity
+        ${activity.series
           .map((entry) => {
             const height = Math.max(24, Math.round((entry.messages / maxMessages) * 140));
             return `
@@ -1116,12 +1234,14 @@ function renderRoomInterface() {
         body: nextMessage,
         me: true,
         time: 'now',
+        createdAt: new Date().toISOString(),
       });
       messages.push({
         author: 'System',
         body: `${anonymousUser.name} sent a new message`,
         me: false,
         time: 'just now',
+        createdAt: new Date().toISOString(),
       });
     }
     state.chatDraft = '';
@@ -1250,6 +1370,8 @@ function renderProfile() {
   els.pageSubtitle.textContent = 'Identity controls, trust growth, and safety tools in one place.';
   syncSidebarRoom();
 
+  const { authPoints, joinedRooms, trustScore } = getUserKpis();
+
   els.viewRoot.innerHTML = `
     <section class="view-panel profile-layout">
       <div class="profile-kpi">
@@ -1262,9 +1384,9 @@ function renderProfile() {
         </div>
         <div class="meter"><span style="width: 78%"></span></div>
         <div class="profile-grid">
-          <div><span>Anonymity points</span><strong>742</strong></div>
-          <div><span>Rooms joined</span><strong>18</strong></div>
-          <div><span>Trust score</span><strong>96%</strong></div>
+          <div><span>Anonymity points</span><strong>${authPoints}</strong></div>
+          <div><span>Rooms joined</span><strong>${joinedRooms}</strong></div>
+          <div><span>Trust score</span><strong>${trustScore}%</strong></div>
         </div>
         <div class="feature-grid">
           <article class="feature-card">
@@ -1490,11 +1612,34 @@ function renderSettings() {
 }
 
 function hydrateAnonymousIdentity() {
+  const session = window.AuthUtils.getSession();
+  const { authPoints, joinedRooms, trustScore } = getUserKpis();
+  if (session?.username) {
+    anonymousUser.name = session.username;
+    if (session.authType === 'guest') {
+      anonymousUser.status = 'Online · Guest session';
+    } else if (state.backendProfile?.authPoints == null) {
+      anonymousUser.status = 'Online · Authenticated account';
+    }
+  }
+
   els.sidebarAvatar.textContent = anonymousUser.icon;
   els.sidebarDisplayName.textContent = anonymousUser.name;
   els.sidebarStatusText.textContent = anonymousUser.status;
+  if (els.sidebarPointsValue) {
+    els.sidebarPointsValue.textContent = String(authPoints);
+  }
+  if (els.sidebarRoomsValue) {
+    els.sidebarRoomsValue.textContent = String(joinedRooms);
+  }
+  if (els.sidebarTrustValue) {
+    els.sidebarTrustValue.textContent = `${trustScore}%`;
+  }
+  if (els.sidebarTrustMeter) {
+    els.sidebarTrustMeter.style.width = `${Math.max(8, trustScore)}%`;
+  }
   els.profileAvatar.textContent = anonymousUser.icon;
-  els.profileName.textContent = `${anonymousUser.name}${Math.floor(Math.random() * 900) + 100}`;
+  els.profileName.textContent = anonymousUser.name;
 }
 
 function createRoomFromModal() {

@@ -31,7 +31,7 @@
           <button class="ghost-button" id="authModeSignupBtn" type="button">Sign up</button>
         </div>
 
-                <div class="modal-grid single">
+        <div class="modal-grid single">
           <label>
             <span>Username</span>
             <input id="authUsernameInput" type="text" placeholder="ghost_name" />
@@ -51,19 +51,19 @@
         <div class="profile-actions">
           <button class="cta-button" id="authSubmitBtn" type="button">Login</button>
           <button class="ghost-button" id="authGuestBtn" type="button">Continue as guest</button>
-        </div>
-      </div>
-    </section>
-
-    <div class="app-shell hidden" id="appShellRoot">
-      <aside class="left-rail glass">
-        <div class="brand-row">
-          <div class="brand-mark">V</div>
-          <div class="brand-copy">
-            <p class="eyebrow">Privacy-first</p>
-            <h1>VibeHack</h1>
+          <div class="modal-grid single" id="authNameFieldWrap" style="display:none;">
+            <label>
+              <span>Name</span>
+              <input id="authNameInput" type="text" placeholder="Your display name" />
+            </label>
           </div>
-          <button class="icon-button rail-toggle" id="sidebarToggleBtn" type="button" aria-label="Toggle sidebar">☰</button>
+
+          <div class="modal-grid single" id="authEmailFieldWrap" style="display:none;">
+            <label>
+              <span>Email</span>
+              <input id="authEmailInput" type="email" placeholder="you@example.com" />
+            </label>
+          </div>
         </div>
 
         <section class="mini-profile glass-subtle">
@@ -77,19 +77,19 @@
           </div>
           <button class="ghost-button small" id="logoutBtn" type="button">Logout</button>
           <div class="meter">
-            <span style="width: 78%"></span>
+            <span id="sidebarTrustMeter" style="width: 60%"></span>
           </div>
           <div class="mini-profile-stats">
             <div>
-              <strong>742</strong>
+              <strong id="sidebarPointsValue">0</strong>
               <span>Points</span>
             </div>
             <div>
-              <strong>18</strong>
+              <strong id="sidebarRoomsValue">0</strong>
               <span>Rooms</span>
             </div>
             <div>
-              <strong>96%</strong>
+              <strong id="sidebarTrustValue">60%</strong>
               <span>Trust</span>
             </div>
           </div>
@@ -306,6 +306,8 @@
       <button class="mobile-nav-link" data-view="settings" type="button">Settings</button>
     </nav>
 
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
+    <script src="config.js"></script>
     <script src="auth-utils.js"></script>
     <script src="app.js"></script>
   </body>

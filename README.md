@@ -11,6 +11,45 @@ VibeHack is a privacy-first anonymous social UI prototype built for hackathon ju
 - Day/Night themes, trust-style profile metrics, and lightweight analytics
 - Local persistence for rooms, preferences, selected room, and settings
 
+## Activity Point Criteria (Current)
+
+Authenticity points are backend-owned (`User.auth_points`) and currently increase by:
+
+1. Heartbeat activity: `+1` point when the client sends a `heartbeat` socket event while in a joined room.
+2. Gifting points: `+1` point when another authenticated user calls `POST /api/users/gift/{ghost_name}`.
+
+Current notes:
+
+- No hard daily cap is enforced yet.
+- Points are permanently stored in the database.
+- Ghost identity pointer used for room privacy expires after 24 hours.
+
+## Feature Screenshots
+
+### Home Dashboard
+
+![Home dashboard](docs/screenshots/home.png)
+
+### Discover
+
+![Discover view](docs/screenshots/discover.png)
+
+### Active Rooms
+
+![Active rooms view](docs/screenshots/rooms.png)
+
+### Chat Room
+
+![Chat room view](docs/screenshots/chat-room.png)
+
+### Profile
+
+![Profile view](docs/screenshots/profile.png)
+
+### Settings
+
+![Settings view](docs/screenshots/settings.png)
+
 ## Project Layout
 
 - `frontend/` - complete user-facing application (HTML/CSS/JS)
@@ -33,6 +72,15 @@ From `frontend/`:
 2. `npm test`
 
 Current suite covers auth utility validation and session flows.
+
+## Regenerate Screenshots
+
+From `frontend/`:
+
+1. `npm install`
+2. `npx playwright install chromium`
+3. Ensure backend is running on `http://127.0.0.1:8000`
+4. `node scripts/capture-screenshots.mjs`
 
 ## Judge Test (60 Seconds)
 

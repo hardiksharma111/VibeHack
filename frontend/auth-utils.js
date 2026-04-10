@@ -5,7 +5,8 @@
   function getApiBase() {
     const fromWindow = String(globalScope.VIBEHACK_API_BASE || '').trim();
     const fromStorage = String(localStorage.getItem('vibehack-api-base') || '').trim();
-    const base = fromWindow || fromStorage || '';
+    const fromOrigin = String(globalScope.location?.origin || '').trim();
+    const base = fromWindow || fromStorage || fromOrigin || '';
     return base.endsWith('/') ? base.slice(0, -1) : base;
   }
 
@@ -87,6 +88,11 @@
       return { ok: false, error: body.detail || 'Registration failed.' };
     }
 
+    const loginResult = await loginRemote(payload);
+    if (loginResult.ok) {
+      return loginResult;
+    }
+
     const session = {
       name: payload.username,
       username: payload.username,
@@ -111,7 +117,7 @@
       return signup(payload);
     } catch (_error) {
       if (apiBase) {
-        return { ok: false, error: 'Backend unreachable. Check VIBEHACK_API_BASE.' };
+        return { ok: false, error: 'Backend unreachable. Please try again in a moment.' };
       }
       return signup(payload);
     }
@@ -183,7 +189,7 @@
       return login(payload);
     } catch (_error) {
       if (apiBase) {
-        return { ok: false, error: 'Backend unreachable. Check VIBEHACK_API_BASE.' };
+        return { ok: false, error: 'Backend unreachable. Please try again in a moment.' };
       }
       return login(payload);
     }

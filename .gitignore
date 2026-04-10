@@ -17,6 +17,9 @@ out/
 .env.*
 !.env.example
 
+# Local database artifacts
+*.db
+
 # OS / editor noise
 .DS_Store
 Thumbs.db
