@@ -1,4 +1,4 @@
-# VibeHack
+<img width="1920" height="995" alt="{28D37296-C1E6-46C6-937B-107C26963067}" src="https://github.com/user-attachments/assets/6261f37f-2c77-4efe-aa2a-d55d8e8b4b9b" /># VibeHack
 
 VibeHack is a privacy-first anonymous social UI prototype built for hackathon judging.
 
@@ -38,23 +38,30 @@ This ensures complete anonymity within rooms while maintaining user identity tra
 ## Feature Showcase
 
 ### Home Dashboard
-![Home view with activity insights](docs/screenshots/home.png)
+![Home view with activity insights](<img width="1920" height="995" alt="{28D37296-C1E6-46C6-937B-107C26963067}" src="https://github.com/user-attachments/assets/34ee438a-737a-431d-85b0-cdba0d84accb" />
+)
 
 ### Room Discovery
-![Discover tab showing available rooms and topics](docs/screenshots/discover.png)
+![Discover tab showing available rooms and topics](<img width="1920" height="987" alt="{E4D086BC-D80F-42AC-AE6E-55A7703A78D8}" src="https://github.com/user-attachments/assets/dad72884-1f82-4cf2-b935-5c15801d2f60" />
+)
 
 ### Active Rooms
-![List of active rooms to join](docs/screenshots/rooms.png)
+![List of active rooms to join](<img width="1920" height="986" alt="{54F1E01C-14EE-4AE1-B57E-A609BB5D3BE9}" src="https://github.com/user-attachments/assets/757d058d-b226-44c9-847e-bf55cf971897" />
+)
 
 ### Temporary Ghost Room
 When you join a room, your profile displays your temporary ghost identity. Other users only see this ghost name in the chat and room members list.
-![Room view with temporary ghost identity](docs/screenshots/ghost-room-temp-joined.png)
+![Room view with temporary ghost identity](<img width="1920" height="991" alt="{7A6A3B0B-DE7C-42C2-94A7-4BAAC87D9FB2}" src="https://github.com/user-attachments/assets/78f79445-5ff2-4c5b-a354-60005b6a9b17" />
+)
+
 
 ### User Profile
-![Profile dashboard with trust metrics and activity history](docs/screenshots/profile.png)
+![Profile dashboard with trust metrics and activity history](<img width="1920" height="989" alt="{7194683D-5903-4ED8-BF00-5EDCC8825EC3}" src="https://github.com/user-attachments/assets/21b58cb1-c0b3-4c3a-89b6-f28d360ea4a3" />
+)
 
 ### Settings & Preferences
-![Settings panel with theme toggles and personal controls](docs/screenshots/settings.png)
+![Settings panel with theme toggles and personal controls](<img width="1915" height="995" alt="{7D33A29E-AA9E-4DAC-B43B-47497CC95986}" src="https://github.com/user-attachments/assets/b5f74b5b-9eba-4c28-87df-797a9de0cdbd" />
+)
 
 ## Project Layout
 
